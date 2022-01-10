@@ -1,0 +1,42 @@
+﻿  SPU.cpp
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(67,24): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(8,1): warning C4005: 'PI2': macro redefinition
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\Application.h(3): message : see previous definition of 'PI2'
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(22,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(22,35): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(120,29): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(120,18): warning C4244: 'initializing': conversion from 'float' to 'const int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(146,36): warning C4244: '*=': conversion from 'double' to 'float', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(168,28): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(168,17): warning C4244: 'initializing': conversion from 'float' to 'const int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(170,42): warning C4244: 'initializing': conversion from 'float' to 'unsigned int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(170,31): warning C4244: 'initializing': conversion from 'float' to 'const unsigned int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(275,12): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(337,23): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(351,15): warning C4244: '=': conversion from 'size_t' to 'float', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(352,49): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(352,35): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(372,31): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(436,96): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(453,108): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(484,100): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(488,99): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(505,114): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(513,113): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(712,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(717,29): warning C4018: '<': signed/unsigned mismatch
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(721,30): warning C4018: '<': signed/unsigned mismatch
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\SPU.cpp(737,19): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(158): warning C4172: returning address of local variable or temporary
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(146): warning C4715: 'ImGuiToast::get_icon': not all control paths return a value
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(162): warning C4172: returning address of local variable or temporary
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(166): warning C4172: returning address of local variable or temporary
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(170): warning C4172: returning address of local variable or temporary
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(129): warning C4715: 'ImGuiToast::get_color': not all control paths return a value
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(119): warning C4172: returning address of local variable or temporary
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(121): warning C4172: returning address of local variable or temporary
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(123): warning C4172: returning address of local variable or temporary
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(125): warning C4172: returning address of local variable or temporary
+D:\Coding\VS\SignalsProcessing\SignalsProcessing\imgui\notify.h(127): warning C4172: returning address of local variable or temporary
+  SignalsProcessing.vcxproj -> D:\Coding\VS\SignalsProcessing\x64\Debug\SignalsProcessing.exe
+  Скопировано файлов:         1.
