@@ -6,6 +6,7 @@ Signal::Signal()
 
 	values.reserve(1000);
 	dft.reserve(1000);
+	idft.reserve(1000);
 }
 
 Vector& Signal::GetValues()
@@ -16,6 +17,11 @@ Vector& Signal::GetValues()
 Vector& Signal::GetDFTValues()
 {
 	return dft;
+}
+
+Vector& Signal::GetIDFTValues()
+{
+	return idft;
 }
 
 std::string& Signal::GetFunction()

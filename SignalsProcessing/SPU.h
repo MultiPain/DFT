@@ -17,6 +17,7 @@ private:
 	bool calc_summ			= false;
 	bool update_graph		= true;
 	bool update_dft			= true;
+	bool update_idft		= false;
 	bool plot_dft_stems		= true;
 	bool draw_half_fft		= true;
 
@@ -25,16 +26,17 @@ private:
 	std::vector<Signal*> signals;
 	Vector frequencies;
 	Vector time_domain;
-	Vector values_summ;
-	Vector dft_summ;
+	Signal summ;
 
-	float duration = 5.0f; // Период времени (в секундах)
-	float fs = 1000.0f; 
+	float duration = 1.0f; // Период времени (в секундах)
+	float fs = 256.0f; 
 	float ts = 0.0f;
 
+	int PrepareData(Vector& dft_summ);
 	void ReloadHeader();
 	void UpdateData();
 	void UpdateDFT();
+	void UpdateIDFT();
 	inline std::string GetFunctionName(int idx);
 	std::string GenerateCode();
 	inline bool CheckFunctions();
@@ -49,5 +51,8 @@ public:
 	void Draw();
 
 	CVector DFT(Vector input, int N = 0);
+	CVector IDFT(Vector input, int N = 0);
+
 	CVector FFT(Vector input, int N = 0);
+	CVector IFFT(Vector input, int N = 0);
 };

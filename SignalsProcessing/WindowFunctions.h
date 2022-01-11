@@ -9,7 +9,7 @@
 #include <vector>
 #include <functional>
 
-typedef std::function<double(int, int)> WindowFunc;
+typedef std::function<float(int, int)> WindowFunc;
 typedef std::map<std::string, WindowFunc> FunctionsMap;
 
 class WindowFunctions

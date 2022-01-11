@@ -14,6 +14,7 @@ class Signal
 private:
 	Vector values;
 	Vector dft;
+	Vector idft;
 
 	std::string lua_function;
 
@@ -23,6 +24,7 @@ public:
 	Signal();
 	Vector& GetValues();
 	Vector& GetDFTValues();
+	Vector& GetIDFTValues();
 	std::string& GetFunction();
 };
 

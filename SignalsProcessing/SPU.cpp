@@ -7,6 +7,35 @@
 #define PI  3.141592653589793238460f
 #define PI2 6.28318530717958647692f
 
+const char* HELP_INFO = u8"sin(x) \n\
+cos(x) \n\
+tan(x) \n\
+acos(x) \n\
+asin(x) \n\
+atan(x) \n\
+atan2(y, x) \n\
+sign(x) - знак числа \n\
+saw(x) \n\
+square(x) \n\
+triangle(x) \n\
+\n\
+abs(x) \n\
+sqrt(x) \n\
+exp(x) \n\
+log(x) \n\
+pi = 3.14159265359 \n\
+pi2 = pi * 2 \n\
+pi_2 = pi / 2 \n\
+pi_r = 1 / pi \n\
+\n\
+ceil(x) - округляет до следующего целого \n\
+floor(x) - возвращает целую часть числа \n\
+fmod(x, y) - остаток от деления \n\
+max(...) - максимальное значение из списка \n\
+min(...) - минимальное значение из списка \n\
+random(min, max) - случайное число в диапазоне \n\
+random(max) - случайное число от 0 до max";
+
 unsigned NextPowerOf2(unsigned n)
 {
 	n = n - 1;
@@ -26,15 +55,15 @@ inline void ResizeToNextPowOf2(Vector& input)
 
 void LoadWindowFunctions()
 {
-	WindowFunctions::Add("Rectangle", [](int idx, int N) -> double {
+	WindowFunctions::Add("Rectangle", [](int idx, int N) -> float {
 		return 1.0f;
 		});
-	WindowFunctions::Add("Triangle", [](int idx, int N) -> double {
+	WindowFunctions::Add("Triangle", [](int idx, int N) -> float {
 		const float FN = (float)N;
 
 		return 1.0f - fabs((idx - (FN / 2.0f)) / (FN / 2.0f));
 		});
-	WindowFunctions::Add("Blackman", [](int idx, int N) -> double {
+	WindowFunctions::Add("Blackman", [](int idx, int N) -> float {
 		const float alpha = 0.16f;
 		const float a0 = (1.0f - alpha) / 2.0f;
 		const float a1 = 0.5f;
@@ -42,7 +71,7 @@ void LoadWindowFunctions()
 
 		return a0 - a1 * cosf((PI2 * idx) / (float)N) + a2 * cosf((2.0f * PI2 * idx) / (float)N);
 		});
-	WindowFunctions::Add("FlatTop", [](int idx, int N) -> double {
+	WindowFunctions::Add("FlatTop", [](int idx, int N) -> float {
 		const float a0 = 0.21557895f;
 		const float a1 = 0.41663158f;
 		const float a2 = 0.277263158f;
@@ -52,7 +81,7 @@ void LoadWindowFunctions()
 
 		return a0 - a1 * cosf((PI2 * idx) / FN) + a2 * cosf((2.0f * PI2 * idx) / FN) - a3 * cosf((3.0f * PI2 * idx) / FN) + a4 * cosf((4.0f * PI2 * idx) / FN);
 		});
-	WindowFunctions::Add("Tukey", [](int idx, int N) -> double {
+	WindowFunctions::Add("Tukey", [](int idx, int N) -> float {
 		const float alpha = 0.5f;
 		const float aN = (float)N * alpha;
 
@@ -63,14 +92,14 @@ void LoadWindowFunctions()
 		else
 			return 0.5f * (1.0f - cosf((PI2 * idx) / aN));
 		});
-	WindowFunctions::Add("Hann", [](int idx, int N) -> double {
+	WindowFunctions::Add("Hann", [](int idx, int N) -> float {
 		const float FN = (float)N;
 		const float a0 = 0.5f;
 		const float a1 = 1.0f - a0;
 
 		return a0 - a1 * cosf((PI2 * idx) / FN);
 		});
-	WindowFunctions::Add("Hamming", [](int idx, int N) -> double {
+	WindowFunctions::Add("Hamming", [](int idx, int N) -> float {
 		const float FN = (float)N;
 		const float a0 = 25.0f / 46.0f;
 		const float a1 = 1.0f - a0;
@@ -98,6 +127,7 @@ void SPU::ReloadHeader()
 	{
 		update_graph = true;
 		update_dft = true;
+		update_idft = true;
 		header_loaded = true;
 		ImGui::InsertNotification({ ImGuiToastType_Success, 5, "Header.lua successfully loaded" });
 	}
@@ -119,6 +149,9 @@ void SPU::UpdateData()
 		ts = 1.0f / fs;
 		const int size = duration * fs;
 		time_domain.resize(size);
+
+		auto& values_summ = summ.GetValues();
+		auto& dft_summ = summ.GetDFTValues();
 
 		if (calc_summ)
 		{
@@ -156,18 +189,18 @@ void SPU::UpdateData()
 			}
 		}
 		update_dft = true;
+		update_idft = true;
 	}
 }
 
-void SPU::UpdateDFT()
+int SPU::PrepareData(Vector& dft_summ)
 {
-
 #ifdef USE_FFT
 	const float K = 0.5f; // поливина отчетов
-	const float RK = 1 / K;
+	const float RK = 2.0f; // 1 / K
 	const int size = duration * fs;
 	const unsigned int new_size = NextPowerOf2(size);
-	const unsigned int half_size = new_size / RK;
+	const unsigned int half_size = new_size * K;
 	const float D = fs * RK / new_size; // scale frequency to match FFT
 
 	if (calc_summ)
@@ -175,18 +208,17 @@ void SPU::UpdateDFT()
 		dft_summ.resize(half_size);
 	}
 
-
-	//0-4094-1 fs*(0,1,2,3,4,5,...) / new_size
-
 	frequencies.resize(half_size);
-	
+
 	for (size_t i = 0; i < half_size; i++)
 	{
 		frequencies[i] = i * D;
 	}
 
+
+	return new_size;
 #else
-	cosnt float RT = 1.0f / duration;
+	const float RT = 1.0f / duration;
 	const int size = duration * ts;
 	frequencies.resize(size);
 
@@ -195,10 +227,20 @@ void SPU::UpdateDFT()
 		frequencies[i] = i * RT;
 	}
 
+	return size;
 #endif
+}
+
+void SPU::UpdateDFT()
+{
+	auto& values_summ = summ.GetValues();
+	auto& dft_summ = summ.GetDFTValues();
+
+	int new_size = PrepareData(dft_summ);
 
 	if (calc_summ)
 	{
+
 #ifdef USE_FFT
 		CVector fft = FFT(values_summ, new_size);
 		ConvertComplexVector(fft, dft_summ);
@@ -222,6 +264,45 @@ void SPU::UpdateDFT()
 #else
 				CVector dft = DFT(values, new_size);
 				ConvertComplexVector(dft, out);
+#endif
+			}
+		}
+	}
+}
+
+void SPU::UpdateIDFT()
+{
+	auto& values_summ = summ.GetValues();
+	auto& dft_summ = summ.GetIDFTValues();
+
+	int new_size = PrepareData(dft_summ);
+
+	if (calc_summ)
+	{
+
+#ifdef USE_FFT
+		CVector fft = IFFT(values_summ, new_size);
+		ConvertComplexVector(fft, dft_summ);
+#else
+		CVector dft = IDFT(values_summ, new_size);
+		ConvertComplexVector(dft, dft_summ);
+#endif
+	}
+	else
+	{
+		for (auto signal : signals)
+		{
+			if (signal->Enabled)
+			{
+				Vector& values = signal->GetValues();
+				Vector& out = signal->GetIDFTValues();
+#ifdef USE_FFT
+				ResizeToNextPowOf2(values);
+				CVector ifft = IFFT(values, new_size);
+				ConvertComplexVector(ifft, out);
+#else
+				CVector idft = IDFT(values, new_size);
+				ConvertComplexVector(idft, out);
 #endif
 			}
 		}
@@ -327,7 +408,6 @@ void SPU::DrawInputs()
 	// Window functions
 	if (ImGui::BeginCombo("##Functions", names[current_window].c_str()))
 	{
-
 		for (size_t i = 0; i < names.size(); i++)
 		{
 			const char* name = names[i].c_str();
@@ -379,12 +459,23 @@ void SPU::DrawInputs()
 	update_graph |= ImGui::Checkbox(u8"Применть", &apply_window);
 
 	// LUA functions
-	if (ImGui::Button("+##AddSignal", ImVec2(-1.0, 0.0)))
+	if (ImGui::Button("+##AddSignal", ImVec2(-ImGui::GetFontSize() * 3.0f, 0.0)))
 	{
 		Signal* signal = new Signal();
 		//signal.Randomize();
 		signals.push_back(signal);
 		update_graph = true;
+	}
+
+	ImGui::SameLine();
+	ImGui::Text("(?)");
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::BeginTooltip();
+
+		ImGui::TextUnformatted(HELP_INFO);
+
+		ImGui::EndTooltip();
 	}
 
 	int i = 0;
@@ -423,6 +514,9 @@ void SPU::DrawInputs()
 
 void SPU::DrawPlots()
 {
+	auto& values_summ = summ.GetValues();
+	auto& dft_summ = summ.GetDFTValues();
+
 	if (ImGui::Begin(u8"Сигналы"))
 	{
 		ImVec2 main_row_size(-1.0f, -1.0f);
@@ -430,6 +524,7 @@ void SPU::DrawPlots()
 
 		if (calc_summ)
 		{
+
 			if (ImPlot::BeginPlot(u8"Сумма сигналов", ImVec2(-1.0f, -1.0), summ_plot_flags))
 			{
 				ImPlot::SetupAxes(u8"Время, t", "f1(x) + f2(x) + ... + fn(x)");
@@ -496,6 +591,72 @@ void SPU::DrawPlots()
 					if (signal->Enabled)
 					{
 						Vector& values = signal->GetDFTValues();
+						ImGui::PushID(i++);
+						if (plot_dft_stems)
+						{
+							ImPlot::SetNextMarkerStyle(i % ImPlotMarker_COUNT);
+
+#ifdef USE_FFT
+							ImPlot::PlotStems(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() / K);
+#else
+							ImPlot::PlotStems(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() - 1);
+#endif
+						}
+						else
+						{
+#ifdef USE_FFT
+							ImPlot::PlotLine(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() / K);
+#else
+							ImPlot::PlotLine(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() - 1);
+#endif
+						}
+						ImGui::PopID();
+					}
+				}
+			}
+
+			ImPlot::EndPlot();
+		}
+
+		ImGui::End();
+	}
+
+	if (ImGui::Begin(u8"Обратное ДПФ"))
+	{
+		auto& idft_summ = summ.GetIDFTValues();
+
+		ImGui::Checkbox(u8"Точками", &plot_dft_stems);
+		ImGui::SameLine();
+		ImGui::Checkbox(u8"Половина", &draw_half_fft);
+
+		int K = 1;
+		if (draw_half_fft)
+			K = 2;
+
+		if (ImPlot::BeginPlot(u8"ОПФ##Summ", ImVec2(-1.0f, -1.0f)))
+		{
+			ImPlot::SetupAxes(u8"Частота", u8"Длина");
+
+			if (calc_summ)
+			{
+				if (plot_dft_stems)
+				{
+					ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond);
+					ImPlot::PlotStems("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() / K);
+				}
+				else
+				{
+					ImPlot::PlotLine("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() / K);
+				}
+			}
+			else
+			{
+				int i = 0;
+				for (auto signal : signals)
+				{
+					if (signal->Enabled)
+					{
+						Vector& values = signal->GetIDFTValues();
 						ImGui::PushID(i++);
 						if (plot_dft_stems)
 						{
@@ -609,7 +770,7 @@ void SPU::Draw()
 
 		ImGui::DockBuilderDockWindow(u8"Сигналы", dock_id_bottom);
 		ImGui::DockBuilderDockWindow(u8"ДПФ", dock_id_bottom);
-		//ImGui::DockBuilderDockWindow("DFT", dock_id_bottom);
+		ImGui::DockBuilderDockWindow(u8"Обратное ДПФ", dock_id_bottom);
 		ImGui::DockBuilderDockWindow("Debug data", dock_id_right);
 		ImGui::DockBuilderDockWindow("Main", dock_main_id);
 
@@ -644,6 +805,9 @@ void SPU::Draw()
 
 	if (ImGui::Begin("Debug data"))
 	{
+		auto& values_summ = summ.GetValues();
+		auto& dft_summ = summ.GetDFTValues();
+
 #ifdef USE_FFT
 		ImGui::Text("Mode: FFT");
 #else
@@ -660,6 +824,7 @@ void SPU::Draw()
 		ImGui::Checkbox("calc_summ", &calc_summ);
 		ImGui::Checkbox("update_graph", &update_graph); ImGui::SameLine(offset);
 		ImGui::Checkbox("update_dft", &update_dft);
+		ImGui::Checkbox("update_idft", &update_idft);
 
 		ImGui::BulletText("Function: %s", selected_window_function.c_str());
 		ImGui::BulletText("Signals size:     %d", signals.size());
@@ -694,6 +859,12 @@ void SPU::Draw()
 		update_dft = false;
 	}
 
+	if (update_idft)
+	{
+		UpdateIDFT();
+		update_idft = false;
+	}
+
 	DrawPlots();
 
 	ImGui::EndDisabled();
@@ -725,6 +896,31 @@ CVector SPU::DFT(Vector input, int N)
 		}
 
 		output[m] = summ;
+	}
+
+	return output;
+}
+
+CVector SPU::IDFT(Vector input, int N)
+{
+	if (N == 0) N = input.size();
+	const float d = PI2 / N;
+
+	const float RN = 1.0f / (float)N;
+
+	CVector output(N);
+
+	for (unsigned int m = 0; m < N; m++)
+	{
+		CNumber summ(0.0, 0.0);
+
+		for (unsigned int n = 0; n < N; n++)
+		{
+			float theta = m * n * d;
+			summ += exp(CNumber(0.0, -theta)) * input[n];
+		}
+
+		output[m] = summ * RN;
 	}
 
 	return output;
@@ -766,6 +962,49 @@ CVector SPU::FFT(Vector input, int N)
 		float alpha = d * i;
 		CNumber w(cosf(alpha), sinf(alpha));
 		output[i] = even_v[i % HN] + w * odd_v[i % HN];
+	}
+
+	return output;
+}
+
+CVector SPU::IFFT(Vector input, int N)
+{
+	if (N == 0)
+	{
+		N = input.size();
+	}
+	else
+	{
+		input.resize(N);
+	}
+
+	if (N == 1)
+	{
+		return CVector(1, input[0]);
+	}
+
+	const int HN = N / 2;
+	const float RN = 1.0f / (float)N;
+
+	Vector even(HN);
+	Vector odd(HN);
+
+	for (int i = 0; i < HN; i++)
+	{
+		even[i] = input[i * 2];
+		odd[i]  = input[i * 2 + 1];
+	}
+
+	CVector even_v = FFT(even);
+	CVector odd_v = FFT(odd);
+	CVector output(N);
+
+	float d = 2 * PI2 / N;
+	for (int i = 0; i < N; i++)
+	{
+		float alpha = d * i;
+		CNumber w(cosf(alpha), sinf(alpha));
+		output[i] = even_v[i % HN] - w * odd_v[i % HN] * RN;
 	}
 
 	return output;

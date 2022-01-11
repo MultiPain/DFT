@@ -11,8 +11,8 @@ extern "C" __declspec(dllexport) unsigned long AmdPowerXpressRequestHighPerforma
 #endif
 
 // Window options
-#define MSA
-#define VSYNC
+//#define MSA
+//#define VSYNC
 //#define USE_STANDART_STYLE
 
 static void glfw_error_callback(int error, const char* description)
@@ -42,17 +42,15 @@ Application::Application(std::string title, int width, int height)
 #else
     // GL 3.0 + GLSL 130
     const char* glsl_version = "#version 130";
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);          // 3.0+ only
-#endif //__APPLE__
-
 #ifdef MSA
     title += " - 4X MSAA";
     glfwWindowHint(GLFW_SAMPLES, 4);
-#endif // MSA
+#endif
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);          // 3.0+ only
+#endif //__APPLE__
 
     glfw_window = glfwCreateWindow(width, height, title.c_str(), NULL, NULL);
     if (glfw_window == NULL)
