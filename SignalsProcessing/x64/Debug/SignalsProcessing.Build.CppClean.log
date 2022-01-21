@@ -21,16 +21,13 @@ d:\coding\vs\dft\signalsprocessing\x64\debug\sandbox.obj
 d:\coding\vs\dft\signalsprocessing\x64\debug\pch.obj
 d:\coding\vs\dft\signalsprocessing\x64\debug\application.obj
 d:\coding\vs\dft\signalsprocessing\x64\debug\windowfunctions.obj
+d:\coding\vs\dft\signalsprocessing\x64\debug\spu.obj
+d:\coding\vs\dft\signalsprocessing\x64\debug\signal.obj
 d:\coding\vs\dft\signalsprocessing\x64\debug\main.obj
 d:\coding\vs\dft\signalsprocessing\x64\debug\implot_items.obj
 d:\coding\vs\dft\signalsprocessing\x64\debug\implot_demo.obj
-d:\coding\vs\dft\signalsprocessing\x64\debug\signal.obj
-d:\coding\vs\dft\signalsprocessing\x64\debug\spu.obj
-c:\users\1\source\repos\dft\x64\debug\signalsprocessing.lib
-c:\users\1\source\repos\dft\x64\debug\signalsprocessing.exp
-d:\coding\vs\dft\signalsprocessing\x64\debug\wave.obj
-d:\coding\vs\dft\signalsprocessing\x64\debug\vc143.idb
-d:\coding\vs\dft\signalsprocessing\x64\debug\vc143.pdb
+d:\coding\vs\dft\signalsprocessing\x64\debug\signalsprocessing.ilk
+d:\coding\vs\dft\x64\debug\signalsprocessing.exe
 d:\coding\vs\dft\x64\debug\signalsprocessing.pdb
 d:\coding\vs\dft\signalsprocessing\x64\debug\signalsp.224e66b7.tlog\cl.command.1.tlog
 d:\coding\vs\dft\signalsprocessing\x64\debug\signalsp.224e66b7.tlog\cl.read.1.tlog
@@ -38,4 +35,3 @@ d:\coding\vs\dft\signalsprocessing\x64\debug\signalsp.224e66b7.tlog\cl.write.1.t
 d:\coding\vs\dft\signalsprocessing\x64\debug\signalsp.224e66b7.tlog\link.command.1.tlog
 d:\coding\vs\dft\signalsprocessing\x64\debug\signalsp.224e66b7.tlog\link.read.1.tlog
 d:\coding\vs\dft\signalsprocessing\x64\debug\signalsp.224e66b7.tlog\link.write.1.tlog
-d:\coding\vs\dft\signalsprocessing\x64\debug\signalsp.224e66b7.tlog\signalsprocessing.write.1u.tlog
