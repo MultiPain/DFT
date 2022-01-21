@@ -5,26 +5,33 @@
 #include <string>
 #include <complex>
 
-typedef std::complex<float> CNumber;
-typedef std::vector<float> Vector;
-typedef std::vector<CNumber> CVector;
-
-class Signal
+namespace SP_LAB
 {
-private:
-	Vector values;
-	Vector dft;
-	Vector idft;
+	typedef std::complex<float> CNumber;
+	typedef std::vector<float> Vector;
+	typedef std::vector<CNumber> CVector;
 
-	std::string lua_function;
+	class Signal
+	{
+	private:
+		Vector values;
+		CVector dft;
+		CVector idft;
 
-public:
-	bool Enabled = true;
+		Vector real_dft;
+		Vector real_idft;
 
-	Signal();
-	Vector& GetValues();
-	Vector& GetDFTValues();
-	Vector& GetIDFTValues();
-	std::string& GetFunction();
-};
+		std::string lua_function;
 
+	public:
+		bool Enabled = true;
+
+		Signal();
+		Vector& GetValues();
+		CVector& GetDFTValues();
+		CVector& GetIDFTValues();
+		std::string& GetFunction();
+		Vector& GetRealDFTValues();
+		Vector& GetRealIDFTValues();
+	};
+}

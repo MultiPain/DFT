@@ -1,36 +1,40 @@
 #include "WindowFunctions.h"
 
-// initialize static map !!!
-FunctionsMap WindowFunctions::values = []
+namespace SP_LAB
 {
-	FunctionsMap ret;
-	return ret;
-}();
-
-WindowFunctions::FunctionsNames WindowFunctions::names = []
-{
-	FunctionsNames ret;
-	ret.reserve(7);
-	return ret;
-}();
-
-double WindowFunctions::Get(std::string name, int idx, int N)
-{
-	auto callback = values[name];
-	if (callback)
+	// initialize static map !!!
+	FunctionsMap WindowFunctions::values = []
 	{
-		return callback(idx, N);
+		FunctionsMap ret;
+		return ret;
+	}();
+
+	FunctionsNames WindowFunctions::names = []
+	{
+		FunctionsNames ret;
+		ret.reserve(7);
+		return ret;
+	}();
+
+	double WindowFunctions::Get(std::string name, int idx, int N)
+	{
+		auto callback = values[name];
+		if (callback)
+		{
+			return callback(idx, N);
+		}
+		return 0.0f;
 	}
-	return 0.0f;
-}
 
-void WindowFunctions::Add(std::string name, WindowFunc func)
-{
-	values.insert(std::make_pair(name, func));
-	names.push_back(name);
-}
+	void WindowFunctions::Add(std::string name, WindowFunc func)
+	{
+		values.insert(std::make_pair(name, func));
+		names.push_back(name);
+	}
 
-WindowFunctions::FunctionsNames& WindowFunctions::GetNames()
-{
-	return names;
+	FunctionsNames& WindowFunctions::GetNames()
+	{
+		return names;
+	}
+
 }
