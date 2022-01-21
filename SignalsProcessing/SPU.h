@@ -34,8 +34,6 @@ namespace SP_LAB
 		bool draw_half_fft = true;
 		bool update_graph = true;
 		bool update_dft = true;
-		bool update_idft = false;
-
 		bool use_fft = false;
 
 		std::string selected_window_function;

@@ -4,6 +4,7 @@
 #include <complex>
 
 //#define SHOW_DEMO
+//#define DEBUG
 
 #define PI  3.141592653589793238460f
 #define PI2 6.28318530717958647692f
@@ -37,6 +38,8 @@ min(...) - минимальное значение из списка \n\
 random(min, max) - случайное число в диапазоне \n\
 random(max) - случайное число от 0 до max";
 
+#ifdef DEBUG
+
 #define PrintVec(vec) \
 	std::cout << #vec << ":" << std::endl; \
 	for (auto v : vec) \
@@ -49,6 +52,7 @@ random(max) - случайное число от 0 до max";
 		std::cout << abs(v) << ", "; \
 	std::cout << std::endl
 
+#endif
 
 namespace SP_LAB
 {
@@ -66,7 +70,7 @@ namespace SP_LAB
 
 	inline void ResizeToNextPowOf2(Vector& input)
 	{
-		const int original = input.size();
+		const int original = (int)input.size();
 		auto target_size = NextPowerOf2(original);
 		input.resize(target_size);
 	}
@@ -126,7 +130,6 @@ namespace SP_LAB
 			});
 	}
 
-
 	SPU::~SPU()
 	{
 		lua_close(L);
@@ -140,7 +143,8 @@ namespace SP_LAB
 		LoadWindowFunctions();
 		ReloadHeader();
 
-		Vector test; // = { 0, 1, 2, 3, 4, 5, 6, 7 };
+#ifdef DEBUG
+		Vector test;
 		for (int i = 0; i < 16; i++)
 			test.push_back(i);
 		CVector fft_test = FFT(test);
@@ -149,7 +153,7 @@ namespace SP_LAB
 		PrintVec(test);
 		PrintCVec(fft_test);
 		PrintVec(rifft);
-
+#endif
 	}
 
 	void SPU::ReloadHeader()
@@ -159,9 +163,8 @@ namespace SP_LAB
 		{
 			update_graph = true;
 			update_dft = true;
-			update_idft = true;
 			header_loaded = true;
-			ImGui::InsertNotification({ ImGuiToastType_Success, 5, "Header.lua successfully loaded" });
+			ImGui::InsertNotification({ ImGuiToastType_Success, 5, u8"Header.lua загружен" });
 		}
 		else
 		{
@@ -170,7 +173,7 @@ namespace SP_LAB
 		}
 	}
 
-	////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////
 	/// Updating data
 	////////////////////////////////////////////////////////////////////
 
@@ -206,6 +209,7 @@ namespace SP_LAB
 					if (signal->Enabled)
 					{
 						float value = CalculateFunctionValue(GetFunctionName(j), tick);
+
 						if (apply_window)
 						{
 							value *= WindowFunctions::Get(selected_window_function, i, size);
@@ -221,7 +225,6 @@ namespace SP_LAB
 				}
 			}
 			update_dft = true;
-			update_idft = true;
 		}
 	}
 
@@ -241,11 +244,10 @@ namespace SP_LAB
 	{
 		if (use_fft)
 		{
-			const float K = 0.5f; // поливина отчетов
-			const float RK = 2.0f; // 1 / K
+			const float RK = 2.0f;
 			const int size = duration * fs;
 			const unsigned int new_size = NextPowerOf2(size);
-			const unsigned int half_size = new_size * K;
+			const unsigned int half_size = new_size / 2;
 			const float D = fs * RK / new_size; // scale frequency to match FFT
 
 			if (calc_summ)
@@ -323,11 +325,13 @@ namespace SP_LAB
 				}
 			}
 		}
+	
+		UpdateIDFT();
 	}
 
 	void SPU::UpdateIDFT()
 	{
-		auto& dft_summ = summ.GetIDFTValues();
+		auto& dft_summ = summ.GetDFTValues();
 		auto& real_dft_summ = summ.GetRealIDFTValues();
 
 		int new_size = PrepareData(dft_summ);
@@ -366,6 +370,16 @@ namespace SP_LAB
 					}
 				}
 			}
+		}
+	}
+
+	void SPU::ConvertComplexVector(const CVector input, Vector& output)
+	{
+		output.resize(input.size());
+
+		for (size_t i = 0; i < input.size(); i++)
+		{
+			output[i] = abs(input[i]); // abs - magnitude of complex number e.g. sqrt(re^2 + im^2)
 		}
 	}
 
@@ -562,13 +576,12 @@ namespace SP_LAB
 		// other Options
 		update_graph |= ImGui::Checkbox(u8"Суммировать все сигналы", &calc_summ);
 		update_graph |= ImGui::SliderFloat(u8"Время", &duration, 0.1f, 10.0f);
-		update_graph |= ImGui::SliderFloat(u8"Частота дискретизации", &fs, 0.1f, 10000.0f, NULL, ImGuiSliderFlags_AlwaysClamp);
+		update_graph |= ImGui::SliderFloat(u8"Частота дискретизации", &fs, 10.0f, 10000.0f, NULL, ImGuiSliderFlags_AlwaysClamp);
 		
 		if (ImGui::Checkbox(u8"FFT", &use_fft))
 		{
 			update_graph = true;
 			update_dft = true;
-			update_idft = true;
 		}
 	}
 
@@ -699,22 +712,12 @@ namespace SP_LAB
 
 				if (calc_summ)
 				{
-					if (plot_dft_stems)
-					{
-						ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond);
+					ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond);
 
-						if (use_fft)
-							ImPlot::PlotStems("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() / K);
-						else
-							ImPlot::PlotStems("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() - 1);
-					}
+					if (use_fft)
+						ImPlot::PlotStems("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() / K);
 					else
-					{
-						if (use_fft)
-							ImPlot::PlotLine("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() / K);
-						else
-							ImPlot::PlotLine("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() - 1);
-					}
+						ImPlot::PlotStems("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() - 1);
 				}
 				else
 				{
@@ -726,22 +729,14 @@ namespace SP_LAB
 							Vector& values = signal->GetRealIDFTValues();
 
 							ImGui::PushID(i++);
-							if (plot_dft_stems)
-							{
-								ImPlot::SetNextMarkerStyle(i % ImPlotMarker_COUNT);
+							
+							ImPlot::SetNextMarkerStyle(i % ImPlotMarker_COUNT);
 
-								if (use_fft)
-									ImPlot::PlotStems(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() / K);
-								else
-									ImPlot::PlotStems(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() - 1);
-							}
+							if (use_fft)
+								ImPlot::PlotStems(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() / K);
 							else
-							{
-								if (use_fft)
-									ImPlot::PlotLine(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() / K);
-								else
-									ImPlot::PlotLine(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() - 1);
-							}
+								ImPlot::PlotStems(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() - 1);
+							
 							ImGui::PopID();
 						}
 					}
@@ -751,16 +746,6 @@ namespace SP_LAB
 			}
 
 			ImGui::End();
-		}
-	}
-
-	void SPU::ConvertComplexVector(const CVector input, Vector& output)
-	{
-		output.resize(input.size());
-
-		for (size_t i = 0; i < input.size(); i++)
-		{
-			output[i] = abs(input[i]); // abs - magnitude of complex number e.g. sqrt(re^2 + im^2)
 		}
 	}
 
@@ -901,7 +886,6 @@ namespace SP_LAB
 			ImGui::Checkbox("calc_summ", &calc_summ);
 			ImGui::Checkbox("update_graph", &update_graph); ImGui::SameLine(offset);
 			ImGui::Checkbox("update_dft", &update_dft);
-			ImGui::Checkbox("update_idft", &update_idft);
 
 			ImGui::BulletText("Function: %s", selected_window_function.c_str());
 			ImGui::BulletText("Signals size:     %d", signals.size());
@@ -934,12 +918,6 @@ namespace SP_LAB
 		{
 			UpdateDFT();
 			update_dft = false;
-		}
-
-		if (update_idft)
-		{
-			UpdateIDFT();
-			update_idft = false;
 		}
 
 		DrawPlots();
@@ -1113,15 +1091,15 @@ namespace SP_LAB
 			odd[i] = input[i * 2 + 1];
 		}
 
-		CVector even_v = FFT(even);
-		CVector odd_v = FFT(odd);
+		Vector even_v = IFFT(even);
+		Vector odd_v = IFFT(odd);
 		Vector output(N);
 
 		for (int i = 0; i < N; i++)
 		{
-			float alpha = PI2 * i / N;
+			float alpha = PI2 * -i / N;
 			CNumber w(cosf(alpha), sinf(alpha));
-			auto complex = even_v[i % HN] - w * odd_v[i % HN];
+			auto complex = even_v[i % HN] + w * odd_v[i % HN];
 			output[i] = complex.real() * RN;
 		}
 
