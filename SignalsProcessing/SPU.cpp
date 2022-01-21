@@ -173,7 +173,69 @@ namespace SP_LAB
 		}
 	}
 
-////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////
+	///LUA stuff
+	////////////////////////////////////////////////////////////////////
+
+	inline std::string SPU::GetFunctionName(int idx)
+	{
+		return "__f" + std::to_string(idx);
+	}
+
+	std::string SPU::GenerateCode()
+	{
+		std::string lua_code;
+
+		for (int i = 0; i < signals.size(); i++)
+		{
+			Signal* signal = signals[i];
+
+			if (signal->Enabled)
+			{
+				std::string fname = GetFunctionName(i);
+				lua_code += "function " + fname + "(t) return " + signal->GetFunction() + " end\n" + fname + "(0)\n";
+			}
+		}
+
+		return lua_code;
+	}
+
+	inline bool SPU::CheckFunctions()
+	{
+		if (!header_loaded)
+		{
+			ImGui::InsertNotification({ ImGuiToastType_Error, 3, "LUA header is not loaded!" });
+			return false;
+		}
+
+		std::string lua_code = GenerateCode();
+		return luaL_dostring(L, lua_code.c_str()) == LUA_OK;
+	}
+
+	// Считает значение пользовательской функции
+	float SPU::CalculateFunctionValue(std::string name, float time_in_space)
+	{
+		lua_getglobal(L, name.c_str());
+		if (lua_isfunction(L, -1))
+		{
+			lua_pushnumber(L, time_in_space);
+			if (lua_pcall(L, 1, 1, 0) == LUA_OK && lua_isnumber(L, -1))
+			{
+				float value = (float)lua_tonumber(L, -1);
+				lua_pop(L, 1);
+				return value;
+			}
+		}
+		else
+		{
+			ImGui::InsertNotification({ ImGuiToastType_Error, 3, "\"%s\" is not a valid function!", name });
+			lua_pop(L, 1);
+		}
+		return 0.0f;
+	}
+
+	////////////////////////////////////////////////////////////////////
 	/// Updating data
 	////////////////////////////////////////////////////////////////////
 
@@ -384,75 +446,6 @@ namespace SP_LAB
 	}
 
 	////////////////////////////////////////////////////////////////////
-	///LUA stuff
-	////////////////////////////////////////////////////////////////////
-
-	inline std::string SPU::GetFunctionName(int idx)
-	{
-		return "__f" + std::to_string(idx);
-	}
-
-	std::string SPU::GenerateCode()
-	{
-		std::string lua_code;
-
-		for (int i = 0; i < signals.size(); i++)
-		{
-			Signal* signal = signals[i];
-
-			if (signal->Enabled)
-			{
-				std::string fname = GetFunctionName(i);
-				lua_code += "function " + fname + "(t) return " + signal->GetFunction() + " end\n" + fname + "(0)\n";
-			}
-		}
-
-		return lua_code;
-	}
-
-	inline bool SPU::CheckFunctions()
-	{
-		if (!header_loaded)
-		{
-			ImGui::InsertNotification({ ImGuiToastType_Error, 3, "LUA header is not loaded!" });
-			return false;
-		}
-
-		std::string lua_code = GenerateCode();
-		return luaL_dostring(L, lua_code.c_str()) == LUA_OK;
-	}
-
-	float SPU::CalculateFunctionValue(std::string name, float time_in_space)
-	{
-		lua_getglobal(L, name.c_str());
-		if (lua_isfunction(L, -1))
-		{
-			int size = duration * ts;
-			lua_pushnumber(L, time_in_space);
-			if (lua_pcall(L, 1, 1, 0) == LUA_OK)
-			{
-				if (lua_isnumber(L, -1))
-				{
-					float value = (float)lua_tonumber(L, -1);
-					lua_pop(L, 1);
-					return value;
-				}
-				else
-				{
-					//ImGui::InsertNotification({ ImGuiToastType_Error, 3, "Can calculate function value!" });
-					lua_pop(L, 1);
-				}
-			}
-		}
-		else
-		{
-			ImGui::InsertNotification({ ImGuiToastType_Error, 3, "\"%s\" is not a valid function!", name });
-			lua_pop(L, 1);
-		}
-		return 0.0f;
-	}
-
-	////////////////////////////////////////////////////////////////////
 
 	void SPU::Remove(int idx)
 	{
@@ -577,12 +570,6 @@ namespace SP_LAB
 		update_graph |= ImGui::Checkbox(u8"Суммировать все сигналы", &calc_summ);
 		update_graph |= ImGui::SliderFloat(u8"Время", &duration, 0.1f, 10.0f);
 		update_graph |= ImGui::SliderFloat(u8"Частота дискретизации", &fs, 10.0f, 10000.0f, NULL, ImGuiSliderFlags_AlwaysClamp);
-		
-		if (ImGui::Checkbox(u8"FFT", &use_fft))
-		{
-			update_graph = true;
-			update_dft = true;
-		}
 	}
 
 	void SPU::DrawPlots()
@@ -698,8 +685,6 @@ namespace SP_LAB
 		{
 			auto& idft_summ = summ.GetRealIDFTValues();
 
-			ImGui::Checkbox(u8"Точками", &plot_dft_stems);
-			ImGui::SameLine();
 			ImGui::Checkbox(u8"Половина", &draw_half_fft);
 
 			int K = 1;
@@ -715,9 +700,9 @@ namespace SP_LAB
 					ImPlot::SetNextMarkerStyle(ImPlotMarker_Diamond);
 
 					if (use_fft)
-						ImPlot::PlotStems("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() / K);
+						ImPlot::PlotLine("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() / K);
 					else
-						ImPlot::PlotStems("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() - 1);
+						ImPlot::PlotLine("##DFT_on_summ", frequencies.data(), idft_summ.data(), frequencies.size() - 1);
 				}
 				else
 				{
@@ -733,9 +718,9 @@ namespace SP_LAB
 							ImPlot::SetNextMarkerStyle(i % ImPlotMarker_COUNT);
 
 							if (use_fft)
-								ImPlot::PlotStems(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() / K);
+								ImPlot::PlotLine(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() / K);
 							else
-								ImPlot::PlotStems(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() - 1);
+								ImPlot::PlotLine(signal->GetFunction().c_str(), frequencies.data(), values.data(), frequencies.size() - 1);
 							
 							ImGui::PopID();
 						}
@@ -799,6 +784,14 @@ namespace SP_LAB
 				{
 					ReloadHeader();
 				}
+
+
+				if (ImGui::MenuItemEx(u8"FFT", "\xef\xa2\x99", NULL, &use_fft))
+				{
+					update_graph = true;
+					update_dft = true;
+				}
+
 				ImGui::EndMenu();
 			}
 
@@ -831,7 +824,6 @@ namespace SP_LAB
 			ImGui::DockBuilderDockWindow(u8"Сигналы", dock_id_bottom);
 			ImGui::DockBuilderDockWindow(u8"ДПФ", dock_id_bottom);
 			ImGui::DockBuilderDockWindow(u8"Обратное ДПФ", dock_id_bottom);
-			ImGui::DockBuilderDockWindow("Debug data", dock_id_right);
 			ImGui::DockBuilderDockWindow("Main", dock_main_id);
 
 			ImGui::DockBuilderFinish(dockspace_id);
@@ -859,51 +851,6 @@ namespace SP_LAB
 		if (ImGui::Begin("Main", NULL, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus))
 		{
 			DrawInputs();
-
-			ImGui::End();
-		}
-
-		if (ImGui::Begin("Debug data"))
-		{
-			auto& values_summ = summ.GetValues();
-			auto& dft_summ = summ.GetDFTValues();
-
-			if (use_fft)
-				ImGui::Text("Mode: FFT");
-			else
-				ImGui::Text("Mode: DFT");
-
-			ImGui::Separator();
-
-			const float offset = 150.0f;
-			ImGui::Checkbox("header_loaded", &header_loaded); ImGui::SameLine(offset);
-			ImGui::Checkbox("window_drag", &window_drag);
-#ifdef SHOW_DEMO
-			ImGui::Checkbox("show_imgui_demo", &show_imgui_demo); ImGui::SameLine(offset);
-			ImGui::Checkbox("show_implot_demo", &show_implot_demo);
-#endif
-			ImGui::Checkbox("apply_window", &apply_window);  ImGui::SameLine(offset);
-			ImGui::Checkbox("calc_summ", &calc_summ);
-			ImGui::Checkbox("update_graph", &update_graph); ImGui::SameLine(offset);
-			ImGui::Checkbox("update_dft", &update_dft);
-
-			ImGui::BulletText("Function: %s", selected_window_function.c_str());
-			ImGui::BulletText("Signals size:     %d", signals.size());
-			for (int i = 0; i < signals.size(); i++)
-			{
-				ImGui::Indent(10.0f);
-				ImGui::BulletText("[%d] DFT size: %d", i, signals[i]->GetDFTValues().size());
-				ImGui::Unindent(10.0f);
-			}
-
-			ImGui::BulletText("frequencies size: %d", frequencies.size());
-			ImGui::BulletText("time_domain size: %d", time_domain.size());
-			ImGui::BulletText("values_summ size: %d", values_summ.size());
-			ImGui::BulletText("dft_summ size:    %d", dft_summ.size());
-
-			ImGui::BulletText("Duration: %.3f", duration);
-			ImGui::BulletText("TS:       %d", ts);
-			ImGui::BulletText("FS:       %.3f", fs);
 
 			ImGui::End();
 		}
@@ -1062,7 +1009,6 @@ namespace SP_LAB
 		return output;
 	}
 
-
 	Vector SPU::IFFT(CVector input, int N)
 	{
 		if (N == 0)
@@ -1097,7 +1043,7 @@ namespace SP_LAB
 
 		for (int i = 0; i < N; i++)
 		{
-			float alpha = PI2 * -i / N;
+			float alpha = PI2 * i / N;
 			CNumber w(cosf(alpha), sinf(alpha));
 			auto complex = even_v[i % HN] + w * odd_v[i % HN];
 			output[i] = complex.real() * RN;
